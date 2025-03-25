@@ -27,15 +27,6 @@ const size_t MEDIAN_REPETITIONS(NUM_REPETITIONS >> 1);
 
 // ---------------------------------------------------------------------
 
-// ---------------------------------------------------------------------
-
-inline uint64_t get_time() {
-    return __rdtsc();
-}
-
-
-// ---------------------------------------------------------------------
-
 void print_progress_bar(std::ostream &out, uint8_t progress) {
     std::ios_base::fmtflags fmt(out.flags());
     out << "\u2563";
@@ -63,8 +54,20 @@ static uint64_t get_timer_overhead() {
     uint64_t start_time, end_time;
 
     for (size_t i = 0; i < NUM_TIMER_SAMPLES; ++i) {
-        start_time = get_time();
-        end_time = get_time();
+#ifdef USE_RDTSC
+        start_time = __rdtsc();
+#else
+        start_time = __builtin_ia32_rdpmc(0);
+        _mm_lfence();
+#endif
+
+#ifdef USE_RDTSC
+        end_time = __rdtsc();
+#else
+        _mm_lfence();
+        end_time = __builtin_ia32_rdpmc(0);
+#endif
+
 
         if (min_overhead > (end_time - start_time)) {
             min_overhead = end_time - start_time;
@@ -92,7 +95,6 @@ static double benchmark(const BLOCK *key, const char* label, uint64_t LEN, Encry
     uint64_t start_time;
     uint64_t end_time;
     const uint64_t timer_overhead = get_timer_overhead();
-
     // ---------------------------------------------------------------------
     // Initialize randomization
     // ---------------------------------------------------------------------
@@ -141,27 +143,47 @@ static double benchmark(const BLOCK *key, const char* label, uint64_t LEN, Encry
         // Load instructions into cache
         // ---------------------------------------------------------------------
 
-        start_time = get_time();
+#ifdef USE_RDTSC
+        start_time = __rdtsc();
+#else
+        start_time = __builtin_ia32_rdpmc(0);
+        _mm_lfence();
+#endif
 
         for (i = 0; i < PRE_WARM_UP_RUNS; ++i) {
             zhash(plaintext, key, LEN, M, enc, DsC);
         }
 
-        end_time = get_time();
+#ifdef USE_RDTSC
+        end_time = __rdtsc();
+#else
+        _mm_lfence();
+        end_time = __builtin_ia32_rdpmc(0);
+#endif
         // ---------------------------------------------------------------------
         // Benchmark
         // ---------------------------------------------------------------------
 
-        start_time = get_time();
+#ifdef USE_RDTSC
+        start_time = __rdtsc();
+#else
+        start_time = __builtin_ia32_rdpmc(0);
+        _mm_lfence();
+#endif
 
         for (i = 0; i < NUM_CONTINUOUS_RUNS; ++i) {
             zhash(plaintext, key, LEN, M, enc, DsC);
         }
 
-        end_time = get_time();
-
+#ifdef USE_RDTSC
+        end_time = __rdtsc();
+#else
+        _mm_lfence();
+        end_time = __builtin_ia32_rdpmc(0);
+#endif
+        /* printf("%lu %lu\n", start_time, end_time); */
         results[num_repetitions] =
-            ((double) (end_time - start_time - timer_overhead)) / NUM_CONTINUOUS_RUNS;
+            ( 1.0 * ((double) (end_time - start_time - timer_overhead)) ) / NUM_CONTINUOUS_RUNS;
         
         for (i = 0; i < NUM_CONTINUOUS_RUNS; ++i) {
             check_sum ^= mac[i * 32];
