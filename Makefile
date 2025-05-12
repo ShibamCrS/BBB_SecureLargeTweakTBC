@@ -1,6 +1,7 @@
 FLAGS=-O3 -march=native #-g -fsanitize=address
 CC=g++
 BIN_DIR = bin
+BENCHTOOL ?= USE_RDTSC
 
 # List of binaries
 BINARIES = benchmark-1 benchmark-2 benchmark-3 benchmark-4
@@ -15,7 +16,7 @@ $(BIN_DIR):
 
 # Compile each benchmark with different TWEAK_BLOCKS values
 $(BIN_DIR)/benchmark-%: benchmark.cpp | $(BIN_DIR)
-	$(CC) $(FLAGS) -DTWEAK_BLOCKS=$* $< -o $@
+	$(CC) $(FLAGS) -DTWEAK_BLOCKS=$* -D$(BENCHTOOL) benchmark.cpp -o $< -o $@
 
 # Clean build artifacts
 clean:

@@ -1,64 +1,17 @@
-#! /bin/sh
-
-# Run without arguments to benchmark all availaible cipher, or give a
-# list of ciphers as arguments.
-
-# Uncomment the following line to run without root access
-# (this degrades benchmark accuracy)
-
-# NO_ROOT=1
-
-
-# The benchmarking code can use three different intructions to measure speed.
-# Uncomment one of the following lines to select a mode.
-
-# BENCHTOOL=USE_RDPMC
-
-# This uses the RDPMC instruction, and is usually the most accurate.
-# However, this requires setting up the perf counters, which often
-# requires superuser access (the code below will try to enable the
-# required permissions).
-
-#BENCHTOOL=PERF_EV
-
-# This uses the perf_event_open interface.  It is usually available to
-# non-root users, but it is less precise than using RDPMC directly.
-
-# BENCHTOOL=USE_RDTSC
-
-# This uses the RDTSC instruction.  This does not require root access
-# and is accurate on Intel CPU, but on AMD CPU the frequency of the
-# RDTSC counter does not match the frequency of the CPU core
-
-
-# Sane default setting
-
-if [ -z $BENCHTOOL ]; then
-    if [ -z $NO_ROOT ]; then
-    BENCHTOOL=USE_RDPMC
-    else
-    BENCHTOOL=USE_RDTSC
-    fi
-fi
-
-
+BENCHTOOL=USE_RDTSC
 LOGFILE=benchmarks.log
 
 # Define the bench function
 bench() {
     echo "**********************************************************************"
-    echo "Running benchmark with $BENCHTOOL"
+    echo "Running benchmarks "
     echo "**********************************************************************"
     executable="$1"  # Accept the executable name as the first argument
 
     echo "**********************************************************************"
     echo "Running benchmark for $executable"
     echo "**********************************************************************"
-    if [ "$BENCHTOOL" = "USE_RDPMC" ]; then
-        perf stat -e cycles:u,cycles:u ./$executable
-    else
-        ./$executable
-    fi
+    ./$executable
 }
 
 exec 4>$LOGFILE
@@ -71,18 +24,13 @@ exec 4>$LOGFILE
     TURBO=`cat /sys/devices/system/cpu/intel_pstate/no_turbo`
     echo 1 | sudo dd of=/sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null
 
-#    TURBO_AMD=`cat /sys/devices/system/cpu/cpufreq/boost`
-#    echo 0 | sudo dd of=/sys/devices/system/cpu/cpufreq/boost 2>/dev/null
-
     POLICY=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
     for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
     do
             echo performance | sudo dd of=$i 2>/dev/null
     done
 
-
     # Enable perf counters
-
     PERF=`cat /proc/sys/kernel/perf_event_paranoid`
     echo -1 | sudo dd of=/proc/sys/kernel/perf_event_paranoid 2>/dev/null
 
@@ -124,8 +72,6 @@ exec 4>$LOGFILE
     # Re-enable frequency scaling
 
     echo $TURBO | sudo dd of=/sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null
-#    echo $TURBO_AMD | sudo dd of=/sys/devices/system/cpu/cpufreq/boost 2>/dev/null
-
     echo $PERF | sudo dd of=/proc/sys/kernel/perf_event_paranoid 2>/dev/null
     echo $RDPMC_CORE | sudo dd of=/sys/bus/event_source/devices/cpu_core/rdpmc 2>/dev/null
     echo $RDPMC_ATOM | sudo dd of=/sys/bus/event_source/devices/cpu_atom/rdpmc 2>/dev/null
