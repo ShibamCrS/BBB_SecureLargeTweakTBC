@@ -4,7 +4,7 @@
 # USE_RDTSC: No root access required; accurate on Intel but may desync on AMD.
 # For most accurate results, use USE_RDPMC.
 
-ROOT=1
+ROOT="${ROOT:-1}"
 # BENCHTOOL=USE_RDPMC
 # BENCHTOOL=USE_RDTSC
 LOGFILE=benchmarks.log
