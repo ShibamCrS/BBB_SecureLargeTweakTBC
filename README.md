@@ -28,7 +28,7 @@ To run a specific benchmark (e.g., `benchmark-3`), use:
 
 ```bash
 make
-sudo ./benchmarks ./bin/benchmark-3
+./benchmarks ./bin/benchmark-3
 ```
 
 ## Benchmarking Tools and Modes
