@@ -1,76 +1,83 @@
-BENCHTOOL=USE_RDTSC
+#! /bin/sh
+
+# USE_RDPMC: Most accurate but requires setting up perf counters (requires root access).
+# USE_RDTSC: No root access required; accurate on Intel but may desync on AMD.
+# For most accurate results, use USE_RDPMC.
+
+ROOT=1
+# BENCHTOOL=USE_RDPMC
+# BENCHTOOL=USE_RDTSC
 LOGFILE=benchmarks.log
+
+if [ -z "$BENCHTOOL" ]; then
+    if [ "$ROOT" -eq 1 ]; then
+        BENCHTOOL=USE_RDPMC
+    else
+        BENCHTOOL=USE_RDTSC
+    fi
+fi
 
 # Define the bench function
 bench() {
     echo "**********************************************************************"
-    echo "Running benchmarks "
+    echo "Running benchmark for $1"
     echo "**********************************************************************"
-    executable="$1"  # Accept the executable name as the first argument
+    executable="$1"
 
-    echo "**********************************************************************"
-    echo "Running benchmark for $executable"
-    echo "**********************************************************************"
-    ./$executable
+    if [ "$BENCHTOOL" = "USE_RDPMC" ]; then
+        perf stat -e cycles:u,cycles:u ./"$executable"
+    else
+        ./"$executable"
+    fi
 }
 
 exec 4>$LOGFILE
 
 (
-    if [ -z $NO_ROOT ]; then
+    if [ "$ROOT" -eq 1 ]; then
 
     # Disable frequency scaling
-
     TURBO=`cat /sys/devices/system/cpu/intel_pstate/no_turbo`
     echo 1 | sudo dd of=/sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null
-
     POLICY=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
     for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
     do
             echo performance | sudo dd of=$i 2>/dev/null
     done
 
+
     # Enable perf counters
     PERF=`cat /proc/sys/kernel/perf_event_paranoid`
     echo -1 | sudo dd of=/proc/sys/kernel/perf_event_paranoid 2>/dev/null
-
     RDPMC_CORE=`sudo cat /sys/bus/event_source/devices/cpu_core/rdpmc`
     echo 2 | sudo dd of=/sys/bus/event_source/devices/cpu_core/rdpmc 2>/dev/null
-
     RDPMC_ATOM=`sudo cat /sys/bus/event_source/devices/cpu_atom/rdpmc`
     echo 2 | sudo dd of=/sys/bus/event_source/devices/cpu_atom/rdpmc 2>/dev/null
 
     fi
 
-
     # Clean up previous build and recreate executables
-    rm -rf bin  # Remove the bin/ directory if it exists
-    make BENCHTOOL=$BENCHTOOL >&2    # Run make and redirect output to stderr
+    rm -rf bin
+    make BENCHTOOL="$BENCHTOOL" >&2
 
-
-    # Check if there are command line arguments
+    # Check for command line arguments
     if [ "$#" -eq 0 ]; then
-        # No arguments, run for all executables in the bin/ directory
         for executable in bin/*; do
-            if [ -x "$executable" ]; then  # Check if it's an executable file
-                bench "$executable"  # Call the bench function with the executable path
+            if [ -x "$executable" ]; then
+                bench "$executable"
             fi
         done
     else
-        # Arguments passed, run the bench function for each provided argument
         for var in "$@"; do
-            bench "$var"  # Call the bench function with the argument
+            bench "$var"
         done
     fi
-    rm -rf bin  # Remove the bin/ directory if it exists
 
-    
+    rm -rf bin
 
-
-    if [ -z $NO_ROOT ]; then
+    if [ "$ROOT" -eq 1 ]; then
 
     # Re-enable frequency scaling
-
     echo $TURBO | sudo dd of=/sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null
     echo $PERF | sudo dd of=/proc/sys/kernel/perf_event_paranoid 2>/dev/null
     echo $RDPMC_CORE | sudo dd of=/sys/bus/event_source/devices/cpu_core/rdpmc 2>/dev/null

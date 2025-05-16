@@ -1,7 +1,7 @@
 FLAGS=-O3 -march=native #-g -fsanitize=address
 CC=g++
 BIN_DIR = bin
-BENCHTOOL ?= USE_RDTSC
+BENCHTOOL ?= USE_RDPMC
 
 # List of binaries
 BINARIES = benchmark-1 benchmark-2 benchmark-3 benchmark-4
@@ -24,4 +24,3 @@ clean:
 clean-all:
 	rm -rf $(BIN_DIR)
 	rm -rf data
-
