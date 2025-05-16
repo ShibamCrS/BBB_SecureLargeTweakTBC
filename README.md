@@ -20,7 +20,7 @@ To build the binaries and run all benchmarks, open a terminal in the `supplement
 Upon successful compilation:
 - Executable binaries are generated inside the `bin/` directory.
 - The binary names indicate the number of tweak blocks used in the benchmarking.
-- For example, `benchmark-i` corresponds to benchmarks using tweaks of size \( i \times n \) bits, where \( n \) is the state size.
+- For example, `benchmark-i` corresponds to benchmarks using tweaks of size $ i \times n $ bits, where $ n $ is the state size.
 - The default run (`./benchmarks`) executes `benchmark-1`, `benchmark-2`, `benchmark-3`, and `benchmark-4` one after another.
 
 It is also possible to run benchmarks for individual tweak sizes.
