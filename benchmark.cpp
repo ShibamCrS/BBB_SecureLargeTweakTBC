@@ -7,6 +7,9 @@
 #include <bitset>
 #include <cstring>
 #include <iomanip>
+#ifndef __PCLMUL__
+#error "This code requires PCLMULQDQ support. Compile with -mpclmul."
+#endif
 
 #ifndef TWEAK_BLOCKS
 #define TWEAK_BLOCKS 3
@@ -313,7 +316,7 @@ int main(int argc, char **argv) {
         perror("Error opening file");
         return 1;
     }
-    double cpbdata1[8], cpbdata2[8], cpbdata3[8];
+    double cpbdata1[8], cpbdata2[8], cpbdata3[8], cpbdata4[8];
 
 #if TWEAK_BLOCKS == 4
     BLOCK KL[2];
@@ -343,15 +346,17 @@ int main(int argc, char **argv) {
     len = LEN[index];
     while (len > 0) {
         cpbdata1[index] = benchmark(keys, "G3_encrypt  ", len, G3_encrypt);
-        cpbdata2[index] = benchmark(KL,   "XHX3_encrypt", len, XHX3_encrypt);
-        cpbdata3[index] = benchmark(K2K,   "G3S_encrypt ", len, G3_STAR_encrypt);
+        cpbdata2[index] = benchmark(keys, "Gr3_encrypt  ", len, Gr3_encrypt);
+        cpbdata3[index] = benchmark(KL,   "XHX3_encrypt", len, XHX3_encrypt);
+        cpbdata4[index] = benchmark(K2K,   "G3S_encrypt ", len, G3_STAR_encrypt);
         printf("\n");
         index++;
         len = LEN[index];
     }
     write_to_file(file, "G3_encrypt  ", LEN, cpbdata1, index );
-    write_to_file(file, "XHX3_encrypt", LEN, cpbdata2, index );
-    write_to_file(file, "G3S_encrypt ", LEN, cpbdata3, index );
+    write_to_file(file, "Gr3_encrypt  ", LEN, cpbdata2, index );
+    write_to_file(file, "XHX3_encrypt", LEN, cpbdata3, index );
+    write_to_file(file, "G3S_encrypt ", LEN, cpbdata4, index );
 #elif TWEAK_BLOCKS == 2
     BLOCK KL[2];
     getKeysXHX(key, KL);

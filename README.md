@@ -4,6 +4,16 @@ The programs provided in the `supplementary_material` directory are designed to 
 They have been tested and successfully compiled using the **g++** compiler on **Linux**.
 
 ---
+## Requirements
+
+### Hardware
+- x86_64 CPU with support for the PCLMULQDQ instruction set (CLMUL)
+- (Optional) AES-NI support for optimized implementations
+
+You can check CLMUL support with:
+```bash
+grep pclmul /proc/cpuinfo
+```
 
 ## 1. Compilation and Execution
 

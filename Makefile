@@ -24,3 +24,4 @@ clean:
 clean-all:
 	rm -rf $(BIN_DIR)
 	rm -rf data
+	rm -rf *.log
