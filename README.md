@@ -8,7 +8,7 @@ They have been tested and successfully compiled using the **g++** compiler on **
 
 ### Hardware
 - x86_64 CPU with support for the PCLMULQDQ instruction set (CLMUL)
-- (Optional) AES-NI support for optimized implementations
+- AES-NI support
 
 You can check CLMUL support with:
 ```bash
